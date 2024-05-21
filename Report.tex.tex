@@ -1,0 +1,398 @@
+\documentclass{article}
+\usepackage{graphicx} 
+\usepackage{minted}
+% Required for inserting images
+
+\title{Report on Sudoku Solver}
+\author{Maxwell Huang}
+\date{March 2024}
+
+\begin{document}
+
+\maketitle
+
+\section{Entire code file}
+
+\begin{minted}{c}
+#include <stdio.h>
+#include <stdbool.h> // import for bool
+#include <math.h> // import for math library
+
+// Code : Here include your necessary library(s)
+// Code : Write your global variables here, like:
+#define N 9
+
+int count = 0;
+
+/* Code: Write your functions here, or the declaration of the head/
+For example write the recursive function solveSudoku(), like:
+*/
+
+
+void printGrid(int arr[N][N])
+{
+    int i;
+    
+	for(i = 0; i < N; i++){
+        for(int j = 0; j < N; j++)
+        {
+            printf("%d ", arr[i][j]);
+            
+            if (j % 3 == 2 && j != 0)
+            {
+                printf("| ");
+            }
+        }
+        printf("\n----------------------- \n");
+	}
+}
+
+bool isValid(int x, int y, int n, int grid[N][N])
+{
+    if (n > 9 || n < 1)
+    {
+        return false;
+    }
+
+    //checking column
+    for (int i = 0; i < 9; i++)
+    {
+        if (n == grid[i][y])
+        {
+            return false;
+        }
+    }
+    
+    //checking row
+    for (int i = 0; i < 9; i++)
+    {
+        if (n == grid[x][i])
+        {
+            return false;
+        }
+    }
+
+
+    //checking subgrid
+    int x0 = floor(x/3)*3;
+    int y0 = floor(y/3)*3;
+
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            if (grid[x0 + i][y0 + j] == n)
+            {
+                return false;
+            }   
+        }
+    }
+    /* Somehow we need to find out either where we are in the subgrid and
+     then measure agains the other numbers in that subgrid
+     OR
+     We have to find out which grid we're in 
+    */
+    return true;
+}
+
+
+bool solveSudoku(int puzzle[][9], int row, int col)
+{
+    int i;
+    if(row<9 && col<9)
+    {
+        if(puzzle[row][col] != 0)
+        {
+            if((col+1)<9) return solveSudoku(puzzle, row, col+1);
+            else if((row+1)<9) return solveSudoku(puzzle, row+1, 0);
+            else return 1;
+        }
+        else
+        {
+            for(i=0; i<9; ++i)
+            {
+                if(isValid(row, col, i+1, puzzle))
+                {
+                    puzzle[row][col] = i+1;
+                    if((col+1)<9)
+                    {
+                        if(solveSudoku(puzzle, row, col +1)) return 1;
+                        else puzzle[row][col] = false;
+                    }
+                    else if((row+1)<9)
+                    {
+                        if(solveSudoku(puzzle, row+1, 0)) return 1;
+                        else puzzle[row][col] = false;
+                    }
+                    else return true;
+                }
+            }
+        }
+        return false;
+    }
+    else return true;
+}
+
+/* This is my second attempt at a solvesudoku function which didn't quite work
+
+bool solveSudoku(int gridS[N][N], int r, int c)
+{
+    count = count + 1;
+    if (r == 9)
+    {
+        return true;
+    }
+    else if (c == 9)
+    {
+        solveSudoku(gridS, r+1, 0);
+    }
+    else if (gridS[r][c] != 0)
+    {
+        solveSudoku(gridS, r, c+1);
+    }
+    else
+    {
+        for (int i = 0; i < 9; i++)
+        {
+            if (isValid(r, c, i, gridS))
+            {
+                gridS[r][c] = i;
+                if (solveSudoku(gridS, r, c+1))
+                {
+                    return true;
+                }
+                gridS[r][c] = 0;
+            }
+        }
+        return false;
+    } 
+
+
+
+    /*This is my first attempt at a solvesudoku function
+    for (int i = 0; i < 9; i++)
+    {
+        for (int j = 0; j < 9; j++)
+        {
+            if (gridS[i][j] == 0)
+            {
+                for (int l = 1; l < 10; l++)
+                {
+                    if (isValid(i, j, l, gridS))
+                    {
+                        gridS[i][j] == l;
+                        solveSudoku(gridS);
+                        gridS[i][j] = 0;
+                    }
+                }
+            }   
+        }   
+    } 
+}
+*/
+
+
+int main()
+{
+    //This is hard coding to receive the "grid"
+    int grid [N][N] = 
+    {
+        {0, 2, 0,    0, 0, 0,    0, 0, 0},
+        {0, 0, 0,    6, 0, 0,    0, 0, 3},
+        {0, 7, 4,    0, 8, 0,    0, 0, 0},
+        
+        {0, 0, 0,    0, 0, 3,    0, 0, 2},
+        {0, 8, 0,    0, 4, 0,    0, 1, 0},
+        {6, 0 ,0,    5, 0, 0,    0, 0, 0},
+        
+        {0, 0, 0,    0, 1, 0,    7, 8, 0},
+        {5, 0, 0,    0, 0, 9,    0, 0, 0},
+        {0, 0, 0,    0, 0, 0,    0, 4, 0},
+    };
+
+
+    printf("The input Sudoku puzzle: \n");
+    // "Print is a function we define to print the grid"
+    printGrid(grid);
+
+    if (solveSudoku(grid, 0, 0))
+    {
+        // If the puzzle is solved then:
+        printf("Solution found after %d iterations: \n", count);
+        printGrid(grid);
+    }
+    else
+    {
+        printf("No solution exists. \n");
+    }
+    return 0;
+}   
+\end{minted}
+
+
+\section{functions and their purposes}
+Let's look at each function step by step:
+
+First we have the printGrid function:
+\begin{minted}{c}
+void printGrid(int arr[N][N])
+{
+    int i;
+    
+	for(i = 0; i < N; i++){
+            for(int j = 0; j < N; j++)
+            {
+                printf("%d ", arr[i][j]);
+                
+                if (j % 3 == 2 && j != 0)
+                {
+                    printf("| ");
+                }
+            }
+         printf("\n----------------------- \n");
+	}
+}  
+\end{minted}
+The printGrid function here is essential because it
+is the function designed to print the sudoku puzzle.
+
+How it does this is simply by looping through 2 for loops
+of length 9 and then printing the number at that location in the
+9 x 9 for loop. On top of that the function prints a |
+every 3 numbers, and prints a "-----------------------".
+These additional measures make sure that the sudoku puzzle is more legible
+by seperating each line from one another, and isolating every
+3 x 3 subgrid.
+
+
+
+Second, we have the isvalid function:
+\begin{minted}{c}
+bool isValid(int x, int y, int n, int grid[N][N])
+{
+    if (n > 9 || n < 1)
+    {
+        return false;
+    }
+
+    //checking column
+    for (int i = 0; i < 9; i++)
+    {
+        if (n == grid[i][y])
+        {
+            return false;
+        }
+    }
+    
+    //checking row
+    for (int i = 0; i < 9; i++)
+    {
+        if (n == grid[x][i])
+        {
+            return false;
+        }
+    }
+
+    //checking subgrid
+    int x0 = floor(x/3)*3;
+    int y0 = floor(y/3)*3;
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            if (grid[x0 + i][y0 + j] == n)
+            {
+                return false;
+            }   
+        }
+    }
+    
+    return true;
+}
+\end{minted}
+The isValid function checks if it's possible to put a give number n
+into the position (x,y) on a sudoku grid.
+
+It does by checking the three conditions of sudoku:
+First, it checks the row of position (x,y) and makes sure
+that there is no other position with the same value n.
+To check the row, we loop 9 times checking if (i, y) == n. 
+If it does equal n then we return false, otherwise we move
+to the next step.
+
+
+Second, it checks the column of position (x,y) and makes sure
+that there is no other position in that column with the same value n.
+We do this pretty much the same way as we checked the row
+
+
+Third, it checks the subgrid of the position, and makes sure
+that there is no other position in that subgrid with the same 
+value as n.
+For this algorithm, I had to be a bit clever.
+The core idea was to take the location (x,y), and then find
+the square at the upper left square of the subgrid we're in.
+From there, we can have a nested for loop both iterating 3 times
+to get to any point in the subgrid to compare the values
+
+
+
+\section{Algorithm implemented}
+    Finally, we have the most important part of the code,
+that being the actual algorithm.
+The core idea behind the algorithm was to loop through every single
+index in the array. Then for each of the empty indices we would try
+to see if each value from 1 - 9 would work. If a value works
+then we would call the function again and do the same thing for
+the next index in the array. Eventually if down the line there's
+no correct value that can be inputted into the next index, then 
+we backtrack one iteration and try a different value for the previous index.
+This entire algorithm is called backtracking, here's the code for it:
+
+\begin{minted}{c}
+bool solveSudoku(int puzzle[][9], int row, int col)
+{
+    int i;
+    if(row<9 && col<9)
+    {
+        if(puzzle[row][col] != 0)
+        {
+            if((col+1)<9) return solveSudoku(puzzle, row, col+1);
+            else if((row+1)<9) return solveSudoku(puzzle, row+1, 0);
+            else return 1;
+        }
+        else
+        {
+            for(i=0; i<9; ++i)
+            {
+                if(isValid(row, col, i+1, puzzle))
+                {
+                    puzzle[row][col] = i+1;
+                    if((col+1)<9)
+                    {
+                        if(solveSudoku(puzzle, row, col +1)) return 1;
+                        else puzzle[row][col] = false;
+                    }
+                    else if((row+1)<9)
+                    {
+                        if(solveSudoku(puzzle, row+1, 0)) return 1;
+                        else puzzle[row][col] = false;
+                    }
+                    else return true;
+                }
+            }
+        }
+        return false;
+    }
+    else return true;
+}   
+\end{minted}
+
+
+
+\end{document}
+
+Your report must be in a LaTeX format ( report.tex ). In your report, describe the algorithm you
+have programmed, the purpose of each function, and include all your codes in Sudoku Solver.c
+or Sudoku Solver GUI.c . Produce the PDF file ( report.pdf ) to make sure it is working, and
+submit both of them.
